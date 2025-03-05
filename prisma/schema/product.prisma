@@ -1,0 +1,15 @@
+model Product {
+    id          String      @id @default(uuid(7))
+    name        String      @db.VarChar(100)
+    description String      @db.Text
+    unitPrice   Decimal     @map("unit_price") @db.Decimal(10, 2)
+    stock       Int         @default(0)
+    active      Boolean     @default(true)
+    createdAt   DateTime    @default(now()) @map("created_at")
+    updatedAt   DateTime    @updatedAt @map("updated_at")
+    deletedAt   DateTime?   @map("deleted_at")
+    OrderItems  OrderItem[]
+
+    @@index([name])
+    @@map("products")
+}
