@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule, PrismaServiceOptions } from 'nestjs-prisma';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UserModule } from './users/users.module';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { UserModule } from './users/users.module';
       }),
       inject: [ConfigService],
     }),
-    UserModule,
+    UsersModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],

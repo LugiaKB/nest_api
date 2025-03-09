@@ -7,12 +7,19 @@ import {
   Param,
   Delete,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { FilterUsersDto } from './dto/filter-users.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import {
+  UserTypeGuard,
+  AllowedUserTypes,
+} from '../auth/guards/user-type.guard';
+import { UserType } from '@prisma/client';
 
 @ApiTags('users')
 @Controller('users')
@@ -28,6 +35,8 @@ export class UsersController {
 
   @Get()
   @ApiOperation({ summary: 'List all users with filters and pagination' })
+  @UseGuards(JwtAuthGuard, UserTypeGuard)
+  @AllowedUserTypes(UserType.ADMIN)
   findAll(@Query() filters: FilterUsersDto) {
     return this.usersService.findAll(filters);
   }
@@ -46,6 +55,8 @@ export class UsersController {
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete user' })
+  @UseGuards(JwtAuthGuard, UserTypeGuard)
+  @AllowedUserTypes(UserType.ADMIN)
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
