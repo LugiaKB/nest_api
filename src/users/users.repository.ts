@@ -57,7 +57,7 @@ export class UsersRepository {
           userType: true,
           createdAt: true,
           updatedAt: true,
-          client: {
+          customer: {
             select: {
               fullName: true,
               phoneNumber: true,

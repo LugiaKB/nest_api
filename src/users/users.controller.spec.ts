@@ -5,6 +5,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { FilterUsersDto } from './dto/filter-users.dto';
 import { UserType } from '@prisma/client';
+import { RequestWithUser } from 'src/auth/interfaces/request-with-user.interface';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -41,7 +42,7 @@ describe('UsersController', () => {
     userType: UserType.CUSTOMER as UserType,
     createdAt: new Date(),
     updatedAt: new Date(),
-    client: null,
+    customer: null,
     deletedAt: null,
   };
 
@@ -114,6 +115,33 @@ describe('UsersController', () => {
       const result = await controller.remove('1');
       expect(result).toEqual(mockUser);
       expect(service.remove).toHaveBeenCalledWith('1');
+    });
+  });
+
+  describe('findCurrentUser', () => {
+    it('should return the authenticated user from request', () => {
+      const req = {
+        user: mockUser,
+        get: jest.fn(),
+        header: jest.fn(),
+        accepts: jest.fn(),
+        acceptsCharsets: jest.fn(),
+        acceptsEncodings: jest.fn(),
+        acceptsLanguages: jest.fn(),
+        param: jest.fn(),
+        is: jest.fn(),
+        cookies: {},
+        secure: false,
+        xhr: false,
+        body: {},
+        params: {},
+        query: {},
+        headers: {},
+      } as unknown as RequestWithUser;
+
+      const result = controller.findCurrentUser(req);
+
+      expect(result).toEqual(mockUser);
     });
   });
 });
