@@ -13,7 +13,7 @@ describe('UsersService', () => {
     name: 'Test User',
     email: 'test@example.com',
     password: 'hashedPassword',
-    userType: UserType.CUSTOMER,
+    userType: UserType.CUSTOMER as UserType,
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
@@ -45,6 +45,7 @@ describe('UsersService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+    expect(repository).toBeDefined();
   });
 
   describe('create', () => {
@@ -52,7 +53,7 @@ describe('UsersService', () => {
       name: 'Test User',
       email: 'test@example.com',
       password: 'password123',
-      userType: UserType.CUSTOMER,
+      userType: UserType.CUSTOMER as UserType,
     };
 
     it('should create a user successfully', async () => {
@@ -64,7 +65,7 @@ describe('UsersService', () => {
       expect(mockRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           ...createDto,
-          password: expect.any(String),
+          password: expect.any(String) as string,
         }),
       );
     });

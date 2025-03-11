@@ -38,7 +38,7 @@ describe('UsersController', () => {
     email: 'test@example.com',
     name: 'Test User',
     password: 'hashedPassword',
-    userType: UserType.CUSTOMER,
+    userType: UserType.CUSTOMER as UserType,
     createdAt: new Date(),
     updatedAt: new Date(),
     client: null,
@@ -51,7 +51,7 @@ describe('UsersController', () => {
         email: 'test@example.com',
         password: 'password123',
         name: 'Test User',
-        userType: UserType.CUSTOMER,
+        userType: UserType.CUSTOMER as UserType,
       };
 
       jest.spyOn(service, 'create').mockResolvedValue({
@@ -61,7 +61,7 @@ describe('UsersController', () => {
 
       const result = await controller.create(createUserDto);
       expect(result).toEqual(mockUser);
-      expect(service.create).toHaveBeenCalledWith(createUserDto);
+      expect(service.create as jest.Mock).toHaveBeenCalledWith(createUserDto);
     });
   });
 

@@ -14,7 +14,7 @@ describe('AuthController', () => {
       id: '1',
       name: 'Test User',
       email: 'test@example.com',
-      userType: UserType.CUSTOMER,
+      userType: UserType.CUSTOMER as UserType,
     },
   };
 

@@ -18,7 +18,7 @@ describe('AuthService', () => {
     name: 'Test User',
     email: 'test@example.com',
     password: 'hashedPassword123',
-    userType: UserType.CUSTOMER,
+    userType: UserType.CUSTOMER as UserType,
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,

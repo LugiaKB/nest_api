@@ -18,7 +18,7 @@ describe('UserTypeGuard', () => {
 
   describe('canActivate', () => {
     it('should allow access when no user types are required', () => {
-      jest.spyOn(reflector, 'get').mockReturnValue(undefined);
+      jest.spyOn(reflector, 'get').mockImplementation(() => undefined);
 
       const result = guard.canActivate(mockContext);
 
@@ -26,10 +26,12 @@ describe('UserTypeGuard', () => {
     });
 
     it('should allow access when user has required type', () => {
-      jest.spyOn(reflector, 'get').mockReturnValue([UserType.ADMIN]);
-      jest.spyOn(mockContext.switchToHttp(), 'getRequest').mockReturnValue({
-        user: { userType: UserType.ADMIN },
-      });
+      jest.spyOn(reflector, 'get').mockImplementation(() => [UserType.ADMIN]);
+      jest
+        .spyOn(mockContext.switchToHttp(), 'getRequest')
+        .mockImplementation(() => ({
+          user: { userType: UserType.ADMIN },
+        }));
 
       const result = guard.canActivate(mockContext);
 
@@ -37,10 +39,12 @@ describe('UserTypeGuard', () => {
     });
 
     it('should deny access when user has wrong type', () => {
-      jest.spyOn(reflector, 'get').mockReturnValue([UserType.ADMIN]);
-      jest.spyOn(mockContext.switchToHttp(), 'getRequest').mockReturnValue({
-        user: { userType: UserType.CUSTOMER },
-      });
+      jest.spyOn(reflector, 'get').mockImplementation(() => [UserType.ADMIN]);
+      jest
+        .spyOn(mockContext.switchToHttp(), 'getRequest')
+        .mockImplementation(() => ({
+          user: { userType: UserType.CUSTOMER as UserType },
+        }));
 
       const result = guard.canActivate(mockContext);
 
@@ -48,10 +52,12 @@ describe('UserTypeGuard', () => {
     });
 
     it('should deny access when user is not present', () => {
-      jest.spyOn(reflector, 'get').mockReturnValue([UserType.ADMIN]);
-      jest.spyOn(mockContext.switchToHttp(), 'getRequest').mockReturnValue({
-        user: undefined,
-      });
+      jest.spyOn(reflector, 'get').mockImplementation(() => [UserType.ADMIN]);
+      jest
+        .spyOn(mockContext.switchToHttp(), 'getRequest')
+        .mockImplementation(() => ({
+          user: undefined,
+        }));
 
       const result = guard.canActivate(mockContext);
 
@@ -68,7 +74,7 @@ describe('UserTypeGuard', () => {
 
       const metadata = Reflect.getMetadata(
         ROLES_KEY,
-        TestController.prototype.testMethod as () => void,
+        TestController.prototype.testMethod,
       ) as UserType[];
 
       expect(metadata).toEqual([UserType.ADMIN]);

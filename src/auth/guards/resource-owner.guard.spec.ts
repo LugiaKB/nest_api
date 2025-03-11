@@ -12,7 +12,10 @@ describe('ResourceOwnerGuard', () => {
     guard = new ResourceOwnerGuard(reflector);
   });
 
-  const createMockContext = (user: any, params: any): ExecutionContext =>
+  const createMockContext = (
+    user: { id: string; userType: UserType } | null,
+    params: { id: string },
+  ): ExecutionContext =>
     ({
       switchToHttp: () => ({
         getRequest: () => ({
@@ -36,7 +39,7 @@ describe('ResourceOwnerGuard', () => {
   it('should allow access for users accessing their own resource', () => {
     const userId = '1';
     const context = createMockContext(
-      { id: userId, userType: UserType.CUSTOMER },
+      { id: userId, userType: UserType.CUSTOMER as UserType },
       { id: userId },
     );
 
@@ -45,7 +48,7 @@ describe('ResourceOwnerGuard', () => {
 
   it('should deny access for non-admin users accessing other resources', () => {
     const context = createMockContext(
-      { id: '1', userType: UserType.CUSTOMER },
+      { id: '1', userType: UserType.CUSTOMER as UserType },
       { id: '2' },
     );
 
