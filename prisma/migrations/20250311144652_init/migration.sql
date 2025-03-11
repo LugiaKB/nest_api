@@ -2,12 +2,12 @@
 CREATE TYPE "OrderStatus" AS ENUM ('RECEIVED', 'IN_PROGRESS', 'SENT', 'DELIVERED');
 
 -- CreateEnum
-CREATE TYPE "UserType" AS ENUM ('ADMIN', 'CLIENT');
+CREATE TYPE "UserType" AS ENUM ('ADMIN', 'CUSTOMER');
 
 -- CreateTable
 CREATE TABLE "orders" (
     "id" TEXT NOT NULL,
-    "client_id" TEXT NOT NULL,
+    "customer_id" TEXT NOT NULL,
     "status" "OrderStatus" NOT NULL DEFAULT 'RECEIVED',
     "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "total_price" DECIMAL(65,30) NOT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE "User" (
     "name" VARCHAR(100) NOT NULL,
     "email" VARCHAR(100) NOT NULL,
     "password" VARCHAR(255) NOT NULL,
-    "user_type" "UserType" NOT NULL DEFAULT 'CLIENT',
+    "user_type" "UserType" NOT NULL DEFAULT 'CUSTOMER',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
@@ -75,7 +75,7 @@ CREATE TABLE "User" (
 );
 
 -- CreateTable
-CREATE TABLE "clients" (
+CREATE TABLE "customers" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
     "full_name" VARCHAR(100) NOT NULL,
@@ -86,11 +86,11 @@ CREATE TABLE "clients" (
     "updated_at" TIMESTAMP(3) NOT NULL,
     "deleted_at" TIMESTAMP(3),
 
-    CONSTRAINT "clients_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "customers_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE INDEX "orders_client_id_status_idx" ON "orders"("client_id", "status");
+CREATE INDEX "orders_customer_id_status_idx" ON "orders"("customer_id", "status");
 
 -- CreateIndex
 CREATE INDEX "order_items_order_id_idx" ON "order_items"("order_id");
@@ -111,16 +111,16 @@ CREATE INDEX "User_email_idx" ON "User"("email");
 CREATE INDEX "User_deleted_at_idx" ON "User"("deleted_at");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "clients_user_id_key" ON "clients"("user_id");
+CREATE UNIQUE INDEX "customers_user_id_key" ON "customers"("user_id");
 
 -- CreateIndex
-CREATE INDEX "clients_user_id_idx" ON "clients"("user_id");
+CREATE INDEX "customers_user_id_idx" ON "customers"("user_id");
 
 -- CreateIndex
-CREATE INDEX "clients_deleted_at_idx" ON "clients"("deleted_at");
+CREATE INDEX "customers_deleted_at_idx" ON "customers"("deleted_at");
 
 -- AddForeignKey
-ALTER TABLE "orders" ADD CONSTRAINT "orders_client_id_fkey" FOREIGN KEY ("client_id") REFERENCES "clients"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "orders" ADD CONSTRAINT "orders_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "customers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "orders"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -129,4 +129,4 @@ ALTER TABLE "order_items" ADD CONSTRAINT "order_items_order_id_fkey" FOREIGN KEY
 ALTER TABLE "order_items" ADD CONSTRAINT "order_items_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "products"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "clients" ADD CONSTRAINT "clients_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "customers" ADD CONSTRAINT "customers_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

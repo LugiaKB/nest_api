@@ -36,7 +36,7 @@ describe('ResourceOwnerGuard', () => {
   it('should allow access for users accessing their own resource', () => {
     const userId = '1';
     const context = createMockContext(
-      { id: userId, userType: UserType.CLIENT },
+      { id: userId, userType: UserType.CUSTOMER },
       { id: userId },
     );
 
@@ -45,7 +45,7 @@ describe('ResourceOwnerGuard', () => {
 
   it('should deny access for non-admin users accessing other resources', () => {
     const context = createMockContext(
-      { id: '1', userType: UserType.CLIENT },
+      { id: '1', userType: UserType.CUSTOMER },
       { id: '2' },
     );
 

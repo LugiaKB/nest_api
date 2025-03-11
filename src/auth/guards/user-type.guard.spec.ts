@@ -39,7 +39,7 @@ describe('UserTypeGuard', () => {
     it('should deny access when user has wrong type', () => {
       jest.spyOn(reflector, 'get').mockReturnValue([UserType.ADMIN]);
       jest.spyOn(mockContext.switchToHttp(), 'getRequest').mockReturnValue({
-        user: { userType: UserType.CLIENT },
+        user: { userType: UserType.CUSTOMER },
       });
 
       const result = guard.canActivate(mockContext);

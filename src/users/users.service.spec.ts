@@ -13,7 +13,7 @@ describe('UsersService', () => {
     name: 'Test User',
     email: 'test@example.com',
     password: 'hashedPassword',
-    userType: UserType.CLIENT,
+    userType: UserType.CUSTOMER,
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
@@ -52,7 +52,7 @@ describe('UsersService', () => {
       name: 'Test User',
       email: 'test@example.com',
       password: 'password123',
-      userType: UserType.CLIENT,
+      userType: UserType.CUSTOMER,
     };
 
     it('should create a user successfully', async () => {

@@ -7,8 +7,8 @@ enum OrderStatus {
 
 model Order {
     id         String      @id @default(uuid(7))
-    client     Client      @relation(fields: [clientId], references: [id], onDelete: Restrict)
-    clientId   String      @map("client_id")
+    customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+    customerId String      @map("customer_id")
     status     OrderStatus @default(RECEIVED)
     date       DateTime    @default(now())
     totalPrice Decimal     @map("total_price")
@@ -16,7 +16,7 @@ model Order {
     updatedAt  DateTime    @updatedAt @map("updated_at")
     OrderItems OrderItem[]
 
-    @@index([clientId, status])
+    @@index([customerId, status])
     @@map("orders")
 }
 

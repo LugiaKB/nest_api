@@ -1,6 +1,6 @@
 enum UserType {
     ADMIN
-    CLIENT
+    CUSTOMER
 }
 
 model User {
@@ -8,17 +8,17 @@ model User {
     name      String    @db.VarChar(100)
     email     String    @unique @db.VarChar(100)
     password  String    @db.VarChar(255)
-    userType  UserType  @default(CLIENT) @map("user_type")
+    userType  UserType  @default(CUSTOMER) @map("user_type")
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime  @updatedAt @map("updated_at")
     deletedAt DateTime? @map("deleted_at")
-    client    Client?
+    customer  Customer?
 
     @@index([email])
     @@index([deletedAt])
 }
 
-model Client {
+model Customer {
     id          String    @id @default(uuid(7))
     user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId      String    @unique @map("user_id")
@@ -33,5 +33,5 @@ model Client {
 
     @@index([userId])
     @@index([deletedAt])
-    @@map("clients")
+    @@map("customers")
 }
