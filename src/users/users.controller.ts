@@ -61,6 +61,22 @@ export class UsersController {
     return this.usersService.findAll(filters);
   }
 
+  @Get('me')
+  @UseGuards(AuthenticationGuard)
+  @ApiOperation({
+    summary: "Get authenticated user's data",
+    description: 'Returns information about the currently authenticated user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Current user data retrieved successfully',
+    type: User,
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  findCurrentUser(@Request() req: RequestWithUser) {
+    return req.user;
+  }
+
   @Get(':id')
   @ApiOperation({
     summary: 'Get user by id',
@@ -95,21 +111,5 @@ export class UsersController {
   @UseGuards(AuthenticationGuard, ResourceOwnerGuard)
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
-  }
-
-  @Get('me')
-  @UseGuards(AuthenticationGuard)
-  @ApiOperation({
-    summary: "Get authenticated user's data",
-    description: 'Returns information about the currently authenticated user',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Current user data retrieved successfully',
-    type: User,
-  })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  findCurrentUser(@Request() req: RequestWithUser) {
-    return req.user;
   }
 }

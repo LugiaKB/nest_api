@@ -120,8 +120,10 @@ describe('UsersController', () => {
 
   describe('findCurrentUser', () => {
     it('should return the authenticated user from request', () => {
+      const { password, deletedAt, ...userWithoutSensitiveInfo } = mockUser;
+      
       const req = {
-        user: mockUser,
+        user: userWithoutSensitiveInfo,
         get: jest.fn(),
         header: jest.fn(),
         accepts: jest.fn(),
@@ -141,7 +143,9 @@ describe('UsersController', () => {
 
       const result = controller.findCurrentUser(req);
 
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual(userWithoutSensitiveInfo);
+      expect(result).not.toHaveProperty('password');
+      expect(result).not.toHaveProperty('deletedAt');
     });
   });
 });

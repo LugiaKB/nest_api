@@ -12,7 +12,7 @@ async function bootstrap() {
       'Simplified e-commerce API with authentication and complete CRUD operations',
     )
     .setVersion('1.0')
-    .addServer('/v1')
+    // .addServer('/v1')
     .addTag('users', 'User-related operations')
     .addTag('auth', 'Authentication operations')
     .addTag('products', 'Product-related operations')
