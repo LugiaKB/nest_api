@@ -41,6 +41,8 @@ export class UsersController {
     type: User,
   })
   @ApiResponse({ status: 400, description: 'Invalid input data.' })
+  @UseGuards(AuthenticationGuard, UserTypeGuard)
+  @AllowedUserTypes(UserType.ADMIN)
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }

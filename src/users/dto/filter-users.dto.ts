@@ -14,10 +14,6 @@ export class FilterUsersDto extends PaginationDto {
   @IsString()
   email?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  status?: boolean;
-
   @ApiPropertyOptional({ enum: UserType })
   @IsEnum(UserType)
   @IsOptional()
