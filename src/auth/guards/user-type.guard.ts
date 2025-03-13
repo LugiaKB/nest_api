@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { UserType } from '@prisma/client';
 import { RequestWithUser } from '../interfaces/request-with-user.interface';
+import { ForbiddenError } from '../../common/errors/application.errors';
 
 export const ROLES_KEY = 'userTypes';
 export const AllowedUserTypes = (...types: UserType[]) =>
@@ -33,6 +34,10 @@ export class UserTypeGuard implements CanActivate {
       return false;
     }
 
-    return allowedTypes.includes(userType);
+    if (!allowedTypes.includes(userType)) {
+      throw new ForbiddenError();
+    }
+
+    return true;
   }
 }

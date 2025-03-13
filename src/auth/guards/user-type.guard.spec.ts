@@ -4,6 +4,7 @@ import { Reflector } from '@nestjs/core';
 import { UserType } from '@prisma/client';
 import { UserTypeGuard, AllowedUserTypes, ROLES_KEY } from './user-type.guard';
 import { createMock } from '@golevelup/ts-jest';
+import { ForbiddenError } from '../../common/errors/application.errors';
 
 describe('UserTypeGuard', () => {
   let guard: UserTypeGuard;
@@ -46,9 +47,7 @@ describe('UserTypeGuard', () => {
           user: { userType: UserType.CUSTOMER as UserType },
         }));
 
-      const result = guard.canActivate(mockContext);
-
-      expect(result).toBe(false);
+      expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenError);
     });
 
     it('should deny access when user is not present', () => {

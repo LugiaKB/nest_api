@@ -15,11 +15,11 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { FilterProductsDto } from './dto/filter-products.dto';
 import { UserType } from '@prisma/client';
-import { AuthenticationGuard } from 'src/auth/guards/authentication.guard';
+import { AuthenticationGuard } from '../auth/guards/authentication.guard';
 import {
   UserTypeGuard,
   AllowedUserTypes,
-} from 'src/auth/guards/user-type.guard';
+} from '../auth/guards/user-type.guard';
 
 @ApiTags('products')
 @Controller('products')

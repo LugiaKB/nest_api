@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UsersService } from './users.service';
 import { UsersRepository } from './users.repository';
 import { User, UserType } from '@prisma/client';
-import { NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { EntityNotFoundError } from '../common/errors/application.errors';
+
+jest.mock('bcrypt');
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -49,25 +52,26 @@ describe('UsersService', () => {
   });
 
   describe('create', () => {
-    const createDto = {
-      name: 'Test User',
-      email: 'test@example.com',
-      password: 'password123',
-      userType: UserType.CUSTOMER as UserType,
-    };
+    beforeEach(() => {
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
+    });
 
     it('should create a user successfully', async () => {
+      const createDto = {
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'password123',
+        userType: UserType.CUSTOMER,
+      };
+
       mockRepository.create.mockResolvedValue(mockUser);
 
       const result = await service.create(createDto);
-
       expect(result).toEqual(mockUser);
-      expect(mockRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          ...createDto,
-          password: expect.any(String) as string,
-        }),
-      );
+      expect(mockRepository.create).toHaveBeenCalledWith({
+        ...createDto,
+        password: 'hashedPassword',
+      });
     });
   });
 
@@ -96,6 +100,40 @@ describe('UsersService', () => {
       expect(result).toEqual(mockPaginatedResponse);
       expect(mockRepository.findAll).toHaveBeenCalledWith(filters);
     });
+
+    it('should return paginated users with filters', async () => {
+      const filters = {
+        name: 'test',
+        email: 'test@example.com',
+        userType: UserType.ADMIN,
+        page: 1,
+        limit: 10,
+      };
+
+      const paginatedResult = {
+        data: [mockUser],
+        meta: { total: 1, page: 1, limit: 10, pages: 1 },
+      };
+
+      mockRepository.findAll.mockResolvedValue(paginatedResult);
+
+      const result = await service.findAll(filters);
+      expect(result).toEqual(paginatedResult);
+      expect(repository.findAll).toHaveBeenCalledWith(filters);
+    });
+
+    it('should handle empty results', async () => {
+      const emptyResult = {
+        data: [],
+        meta: { total: 0, page: 1, limit: 10, pages: 0 },
+      };
+
+      mockRepository.findAll.mockResolvedValue(emptyResult);
+
+      const result = await service.findAll({});
+      expect(result.data).toHaveLength(0);
+      expect(result.meta.total).toBe(0);
+    });
   });
 
   describe('findOne', () => {
@@ -107,10 +145,16 @@ describe('UsersService', () => {
       expect(result).toEqual(mockUser);
     });
 
-    it('should throw NotFoundException if user not found', async () => {
+    it('should throw EntityNotFoundError if user not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('1')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('1')).rejects.toThrow(EntityNotFoundError);
+    });
+
+    it('should throw EntityNotFoundError if user not found', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.findOne('1')).rejects.toThrow(EntityNotFoundError);
     });
   });
 
@@ -127,12 +171,23 @@ describe('UsersService', () => {
       expect(mockRepository.update).toHaveBeenCalledWith('1', updateDto);
     });
 
-    it('should throw NotFoundException if user not found', async () => {
+    it('should throw EntityNotFoundError if user not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
       await expect(service.update('1', updateDto)).rejects.toThrow(
-        NotFoundException,
+        EntityNotFoundError,
       );
+    });
+
+    it('should not hash password if not provided', async () => {
+      const updateDto = { name: 'Updated Name' };
+      mockRepository.findOne.mockResolvedValue(mockUser);
+      mockRepository.update.mockResolvedValue({ ...mockUser, ...updateDto });
+
+      (bcrypt.hash as jest.Mock).mockClear();
+
+      await service.update('1', updateDto);
+      expect(bcrypt.hash).not.toHaveBeenCalled();
     });
   });
 
@@ -150,10 +205,10 @@ describe('UsersService', () => {
       expect(mockRepository.softDelete).toHaveBeenCalledWith('1');
     });
 
-    it('should throw NotFoundException if user not found', async () => {
+    it('should throw EntityNotFoundError if user not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.remove('1')).rejects.toThrow(NotFoundException);
+      await expect(service.remove('1')).rejects.toThrow(EntityNotFoundError);
     });
   });
 });

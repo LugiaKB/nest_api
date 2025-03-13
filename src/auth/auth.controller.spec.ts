@@ -9,12 +9,12 @@ describe('AuthController', () => {
   let authService: AuthService;
 
   const mockLoginResponse = {
-    access_token: 'test-token',
+    token: 'test-token',
     user: {
       id: '1',
       name: 'Test User',
       email: 'test@example.com',
-      userType: UserType.CUSTOMER as UserType,
+      userType: UserType.CUSTOMER,
     },
   };
 

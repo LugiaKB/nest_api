@@ -2,9 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
-import { UnauthorizedException } from '@nestjs/common';
 import { User, UserType } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import {
+  UnauthorizedError,
+  InvalidCredentialsError,
+} from '../common/errors/application.errors';
 
 jest.mock('bcrypt');
 
@@ -24,6 +27,10 @@ describe('AuthService', () => {
     deletedAt: null,
   } satisfies User;
 
+  const mockJwtService = {
+    signAsync: jest.fn().mockResolvedValue('test-token'),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -36,9 +43,7 @@ describe('AuthService', () => {
         },
         {
           provide: JwtService,
-          useValue: {
-            sign: jest.fn().mockReturnValue('test-token'),
-          },
+          useValue: mockJwtService,
         },
       ],
     }).compile();
@@ -49,21 +54,21 @@ describe('AuthService', () => {
   });
 
   describe('validateUser', () => {
-    it('should throw UnauthorizedException when user not found', async () => {
+    it('should throw UnauthorizedError when user not found', async () => {
       jest.spyOn(usersService, 'findByEmail').mockResolvedValue(null as never);
 
       await expect(
         service.validateUser('test@example.com', 'password'),
-      ).rejects.toThrow(UnauthorizedException);
+      ).rejects.toThrow(UnauthorizedError);
     });
 
-    it('should throw UnauthorizedException when password is invalid', async () => {
+    it('should throw InvalidCredentialsError when password is invalid', async () => {
       jest.spyOn(usersService, 'findByEmail').mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false as never);
 
       await expect(
         service.validateUser('test@example.com', 'wrongpassword'),
-      ).rejects.toThrow(UnauthorizedException);
+      ).rejects.toThrow(InvalidCredentialsError);
     });
 
     it('should return user when credentials are valid', async () => {
@@ -76,6 +81,15 @@ describe('AuthService', () => {
       );
       expect(result).toEqual(mockUser);
     });
+
+    it('should handle database errors gracefully', async () => {
+      jest
+        .spyOn(usersService, 'findByEmail')
+        .mockRejectedValue(new Error('Database error'));
+      await expect(
+        service.validateUser('test@example.com', 'password'),
+      ).rejects.toThrow(UnauthorizedError);
+    });
   });
 
   describe('login', () => {
@@ -83,16 +97,15 @@ describe('AuthService', () => {
       jest.spyOn(service, 'validateUser').mockResolvedValue(mockUser);
     });
 
-    it('should return access token and user data', async () => {
-      const signSpy = jest.spyOn(jwtService, 'sign');
+    it('should return token and user data', async () => {
+      const loginDto = { email: 'test@example.com', password: 'password' };
+      jest.spyOn(service, 'validateUser').mockResolvedValue(mockUser);
+      mockJwtService.signAsync.mockResolvedValue('test-token');
 
-      const result = await service.login({
-        email: 'test@example.com',
-        password: 'password123',
-      });
+      const result = await service.login(loginDto);
 
       expect(result).toEqual({
-        access_token: 'test-token',
+        token: 'test-token',
         user: {
           id: mockUser.id,
           name: mockUser.name,
@@ -100,12 +113,27 @@ describe('AuthService', () => {
           userType: mockUser.userType,
         },
       });
+    });
 
-      expect(signSpy).toHaveBeenCalledWith({
+    it('should generate token with correct payload', async () => {
+      const loginDto = { email: 'test@example.com', password: 'password' };
+      jest.spyOn(service, 'validateUser').mockResolvedValue(mockUser);
+
+      await service.login(loginDto);
+
+      expect(mockJwtService.signAsync).toHaveBeenCalledWith({
         sub: mockUser.id,
         email: mockUser.email,
         userType: mockUser.userType,
       });
+    });
+
+    it('should handle JWT signing errors', async () => {
+      const loginDto = { email: 'test@example.com', password: 'password' };
+      jest.spyOn(service, 'validateUser').mockResolvedValue(mockUser);
+      mockJwtService.signAsync.mockRejectedValue(new Error('JWT Error'));
+
+      await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedError);
     });
   });
 });

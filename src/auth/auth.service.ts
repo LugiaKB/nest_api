@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import {
+  InvalidCredentialsError,
+  UnauthorizedError,
+} from '../common/errors/application.errors';
 import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcrypt';
 import { UsersService } from '../users/users.service';
@@ -13,33 +17,46 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string) {
-    const user = await this.usersService.findByEmail(email);
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    try {
+      const user = await this.usersService.findByEmail(email);
+      const isPasswordValid = await compare(password, user.password);
 
-    const isPasswordValid = await compare(password, user.password);
-    if (!isPasswordValid)
-      throw new UnauthorizedException('Invalid credentials');
+      if (!isPasswordValid) {
+        throw new InvalidCredentialsError();
+      }
 
-    return user;
+      return user;
+    } catch (error) {
+      if (error instanceof InvalidCredentialsError) {
+        throw error;
+      }
+      throw new UnauthorizedError();
+    }
   }
 
   async login(loginDto: LoginDto) {
-    const user = await this.validateUser(loginDto.email, loginDto.password);
-
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      userType: user.userType,
-    };
-
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        name: user.name,
+    try {
+      const user = await this.validateUser(loginDto.email, loginDto.password);
+      const payload: JwtPayload = {
+        sub: user.id,
         email: user.email,
         userType: user.userType,
-      },
-    };
+      };
+
+      return {
+        token: await this.jwtService.signAsync(payload),
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          userType: user.userType,
+        },
+      };
+    } catch (error) {
+      if (error instanceof InvalidCredentialsError) {
+        throw error;
+      }
+      throw new UnauthorizedError();
+    }
   }
 }

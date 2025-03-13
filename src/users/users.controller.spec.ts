@@ -121,7 +121,7 @@ describe('UsersController', () => {
   describe('findCurrentUser', () => {
     it('should return the authenticated user from request', () => {
       const { password, deletedAt, ...userWithoutSensitiveInfo } = mockUser;
-      
+
       const req = {
         user: userWithoutSensitiveInfo,
         get: jest.fn(),
