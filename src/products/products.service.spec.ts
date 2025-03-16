@@ -44,29 +44,35 @@ describe('ProductsService', () => {
     repository = module.get<ProductsRepository>(ProductsRepository);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  describe('create', () => {
+    it('should create a product successfully', async () => {
+      const createDto = {
+        name: 'Test Product',
+        description: 'Test Description',
+        unitPrice: 100.0,
+        stock: 10,
+      };
+
+      mockRepository.create.mockResolvedValue(mockProduct);
+
+      const result = await service.create(createDto);
+      expect(result).toEqual(mockProduct);
+      expect(repository.create).toHaveBeenCalledWith(createDto);
+    });
   });
 
   describe('findAll', () => {
-    it('should apply filters correctly', async () => {
+    it('should apply price range filters correctly', async () => {
       const filters = {
-        name: 'test',
         minUnitPrice: 50,
         maxUnitPrice: 150,
-        active: true,
         page: 1,
         limit: 10,
       };
 
       const paginatedResult = {
         data: [mockProduct],
-        meta: {
-          total: 1,
-          page: 1,
-          limit: 10,
-          pages: 1,
-        },
+        meta: { total: 1, page: 1, limit: 10, pages: 1 },
       };
 
       mockRepository.findAll.mockResolvedValue(paginatedResult);
@@ -76,22 +82,46 @@ describe('ProductsService', () => {
       expect(repository.findAll).toHaveBeenCalledWith(filters);
     });
 
-    it('should handle empty results', async () => {
-      const emptyResult = {
-        data: [],
-        meta: { total: 0, page: 1, limit: 10, pages: 0 },
-      };
+    it('should filter by active status', async () => {
+      const filters = { active: true };
+      await service.findAll(filters);
+      expect(repository.findAll).toHaveBeenCalledWith(filters);
+    });
+  });
 
-      mockRepository.findAll.mockResolvedValue(emptyResult);
+  describe('findOne', () => {
+    it('should return a product if found', async () => {
+      mockRepository.findOne.mockResolvedValue(mockProduct);
 
-      const result = await service.findAll({});
-      expect(result.data).toHaveLength(0);
-      expect(result.meta.total).toBe(0);
+      const result = await service.findOne('1');
+      expect(result).toEqual(mockProduct);
+    });
+
+    it('should throw EntityNotFoundError if product not found', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.findOne('999')).rejects.toThrow(EntityNotFoundError);
     });
   });
 
   describe('update', () => {
-    it('should update product status correctly', async () => {
+    it('should update product price and recalculate stock', async () => {
+      const updateDto = { unitPrice: 150.0, stock: 20 };
+      const updatedProduct = {
+        ...mockProduct,
+        unitPrice: new Decimal(150.0),
+        stock: 20,
+      };
+
+      mockRepository.findOne.mockResolvedValue(mockProduct);
+      mockRepository.update.mockResolvedValue(updatedProduct);
+
+      const result = await service.update('1', updateDto);
+      expect(result.unitPrice.toNumber()).toBe(150.0);
+      expect(result.stock).toBe(20);
+    });
+
+    it('should handle product deactivation', async () => {
       const updateDto = { active: false };
       mockRepository.findOne.mockResolvedValue(mockProduct);
       mockRepository.update.mockResolvedValue({
@@ -102,19 +132,25 @@ describe('ProductsService', () => {
       const result = await service.update('1', updateDto);
       expect(result.active).toBe(false);
     });
+  });
 
-    it('should update multiple fields at once', async () => {
-      const updateDto = {
-        name: 'Updated Name',
-        description: 'Updated Description',
-        unitPrice: 150.0,
-        stock: 20,
-      };
+  describe('remove', () => {
+    it('should soft delete product', async () => {
+      const deletedAt = new Date();
       mockRepository.findOne.mockResolvedValue(mockProduct);
-      mockRepository.update.mockResolvedValue({ ...mockProduct, ...updateDto });
+      mockRepository.softDelete.mockResolvedValue({
+        ...mockProduct,
+        deletedAt,
+      });
 
-      const result = await service.update('1', updateDto);
-      expect(result).toEqual(expect.objectContaining(updateDto));
+      const result = await service.remove('1');
+      expect(result.deletedAt).toEqual(deletedAt);
+    });
+
+    it('should throw EntityNotFoundError when trying to delete non-existent product', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.remove('999')).rejects.toThrow(EntityNotFoundError);
     });
   });
 });

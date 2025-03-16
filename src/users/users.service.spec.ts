@@ -73,6 +73,18 @@ describe('UsersService', () => {
         password: 'hashedPassword',
       });
     });
+
+    it('should hash the password before creating', async () => {
+      const createDto = {
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'password123',
+        userType: UserType.CUSTOMER,
+      };
+
+      await service.create(createDto);
+      expect(bcrypt.hash).toHaveBeenCalledWith('password123', 10);
+    });
   });
 
   describe('findAll', () => {
@@ -158,6 +170,26 @@ describe('UsersService', () => {
     });
   });
 
+  describe('findByEmail', () => {
+    it('should return a user if found by email', async () => {
+      mockRepository.findByEmail.mockResolvedValue(mockUser);
+
+      const result = await service.findByEmail('test@example.com');
+      expect(result).toEqual(mockUser);
+      expect(mockRepository.findByEmail).toHaveBeenCalledWith(
+        'test@example.com',
+      );
+    });
+
+    it('should throw EntityNotFoundError if user not found by email', async () => {
+      mockRepository.findByEmail.mockResolvedValue(null);
+
+      await expect(service.findByEmail('notfound@example.com')).rejects.toThrow(
+        EntityNotFoundError,
+      );
+    });
+  });
+
   describe('update', () => {
     const updateDto = { name: 'Updated Name' };
 
@@ -191,6 +223,39 @@ describe('UsersService', () => {
       await service.update('1', updateDto);
       expect(bcrypt.hash).not.toHaveBeenCalled();
     });
+
+    it('should hash password when updating with new password', async () => {
+      const updateDto = { password: 'newpassword123' };
+      const hashedPassword = 'newhashed';
+
+      (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
+      mockRepository.findOne.mockResolvedValue(mockUser);
+      mockRepository.update.mockResolvedValue({
+        ...mockUser,
+        password: hashedPassword,
+      });
+
+      await service.update('1', updateDto);
+
+      expect(bcrypt.hash).toHaveBeenCalledWith('newpassword123', 10);
+      expect(mockRepository.update).toHaveBeenCalledWith('1', {
+        ...mockUser,
+        password: hashedPassword,
+      });
+    });
+
+    it('should preserve existing data when updating partially', async () => {
+      const updateDto = { name: 'New Name' };
+      const expectedUpdate = { ...mockUser, name: 'New Name' };
+
+      mockRepository.findOne.mockResolvedValue(mockUser);
+      mockRepository.update.mockResolvedValue(expectedUpdate);
+
+      const result = await service.update('1', updateDto);
+
+      expect(result).toEqual(expectedUpdate);
+      expect(mockRepository.update).toHaveBeenCalledWith('1', expectedUpdate);
+    });
   });
 
   describe('remove', () => {
@@ -211,6 +276,30 @@ describe('UsersService', () => {
       mockRepository.findOne.mockResolvedValue(null);
 
       await expect(service.remove('1')).rejects.toThrow(EntityNotFoundError);
+    });
+  });
+
+  describe('hashUserPassword', () => {
+    beforeEach(() => {
+      (bcrypt.hash as jest.Mock).mockClear();
+    });
+
+    it('should hash password when provided', async () => {
+      const user = {
+        name: 'Test',
+        password: 'plainpassword',
+        email: 'test@example.com',
+        userType: UserType.CUSTOMER,
+      };
+      const hashedPassword = 'hashed123';
+
+      (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
+
+      const result = await service.hashUserPassword(user);
+
+      expect(result.password).toBe(hashedPassword);
+      expect(bcrypt.hash).toHaveBeenCalledWith('plainpassword', 10);
+      expect(bcrypt.hash).toHaveBeenCalledTimes(1);
     });
   });
 });
