@@ -11,12 +11,9 @@ export class UsersService {
   constructor(private readonly usersRepository: UsersRepository) {}
 
   async create(createUserDto: CreateUserDto) {
-    const hashedPassword = await hash(createUserDto.password, 10);
+    const userData = await this.hashUserPassword(createUserDto);
 
-    return this.usersRepository.create({
-      ...createUserDto,
-      password: hashedPassword,
-    });
+    return this.usersRepository.create(userData);
   }
 
   findAll(filters: FilterUsersDto) {
@@ -38,18 +35,27 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    await this.findOne(id);
+    const user = await this.findOne(id);
+    const updatedUser = { ...user, ...updateUserDto };
 
-    if (updateUserDto.password) {
-      const hashedPassword = await hash(updateUserDto.password, 10);
-      updateUserDto.password = hashedPassword;
-    }
+    const userData = updateUserDto.password
+      ? await this.hashUserPassword(updatedUser)
+      : updatedUser;
 
-    return this.usersRepository.update(id, updateUserDto);
+    return this.usersRepository.update(id, userData);
   }
 
   async remove(id: string) {
     await this.findOne(id);
     return this.usersRepository.softDelete(id);
+  }
+
+  async hashUserPassword<T extends CreateUserDto>(user: T): Promise<T> {
+    if (user.password) {
+      const hashedPassword = await hash(user.password, 10);
+      return { ...user, password: hashedPassword };
+    }
+
+    return user;
   }
 }

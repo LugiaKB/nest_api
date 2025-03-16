@@ -11,7 +11,10 @@ export class AuthenticationGuard
     try {
       const canActivate = await super.canActivate(context);
       return canActivate as boolean;
-    } catch (error) {
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new UnauthorizedError(error.message);
+      }
       throw new UnauthorizedError();
     }
   }

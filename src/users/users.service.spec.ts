@@ -162,13 +162,15 @@ describe('UsersService', () => {
     const updateDto = { name: 'Updated Name' };
 
     it('should update user successfully', async () => {
+      const updatedUser = { ...mockUser, ...updateDto };
+
       mockRepository.findOne.mockResolvedValue(mockUser);
-      mockRepository.update.mockResolvedValue({ ...mockUser, ...updateDto });
+      mockRepository.update.mockResolvedValue(updatedUser);
 
       const result = await service.update('1', updateDto);
 
-      expect(result).toEqual({ ...mockUser, ...updateDto });
-      expect(mockRepository.update).toHaveBeenCalledWith('1', updateDto);
+      expect(result).toEqual(updatedUser);
+      expect(mockRepository.update).toHaveBeenCalledWith('1', updatedUser);
     });
 
     it('should throw EntityNotFoundError if user not found', async () => {
