@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'nestjs-prisma';
 import { User, Prisma } from '@prisma/client';
 import { FilterUsersDto } from './dto/filter-users.dto';
+import { buildPaginationResponse } from 'src/common/utils/pagination.util';
+import { UserWithoutSensitiveInfo } from './entities/user.entity';
+import { IPaginatedData } from 'src/common/interfaces/http-response.interface';
+import { FilterCustomersDto } from 'src/customers/dto/filter-customers.dto';
 
 @Injectable()
 export class UsersRepository {
@@ -11,10 +15,13 @@ export class UsersRepository {
     return this.prisma.user.create({ data });
   }
 
-  async findAll(filters: FilterUsersDto) {
+  async findAll(
+    filters: FilterUsersDto,
+    customerFilters?: FilterCustomersDto,
+  ): Promise<IPaginatedData<UserWithoutSensitiveInfo>> {
     const {
-      page = 1,
-      limit = 10,
+      page,
+      limit,
       name,
       email,
       userType,
@@ -23,6 +30,9 @@ export class UsersRepository {
       updatedAtStart,
       updatedAtEnd,
     } = filters;
+
+    const { fullName, phoneNumber, address, status } = customerFilters || {};
+
     const skip = (page - 1) * limit;
 
     const where: Prisma.UserWhereInput = {
@@ -42,6 +52,18 @@ export class UsersRepository {
           ...(updatedAtEnd && { lte: new Date(updatedAtEnd) }),
         },
       }),
+      ...(customerFilters && {
+        customer: {
+          ...(fullName && {
+            fullName: { contains: fullName, mode: 'insensitive' },
+          }),
+          ...(phoneNumber && { phoneNumber: { contains: phoneNumber } }),
+          ...(address && {
+            address: { contains: address, mode: 'insensitive' },
+          }),
+          ...(status !== undefined && { status }),
+        },
+      }),
     };
 
     const [users, total] = await Promise.all([
@@ -59,7 +81,9 @@ export class UsersRepository {
           updatedAt: true,
           customer: {
             select: {
+              userId: true,
               fullName: true,
+              address: true,
               phoneNumber: true,
               status: true,
             },
@@ -69,15 +93,12 @@ export class UsersRepository {
       this.prisma.user.count({ where }),
     ]);
 
-    return {
-      data: users,
-      meta: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-    };
+    return buildPaginationResponse<UserWithoutSensitiveInfo>(
+      users,
+      total,
+      page,
+      limit,
+    );
   }
 
   async findOne(id: string): Promise<User | null> {

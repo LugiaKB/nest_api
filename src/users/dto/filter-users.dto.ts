@@ -1,9 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, IsDateString } from 'class-validator';
 import { UserType } from '@prisma/client';
-import { PaginationDto } from '../../common/dto/pagination.dto';
+import { BaseFilterDto } from 'src/common/dto/base-filter.dto';
 
-export class FilterUsersDto extends PaginationDto {
+export class FilterUsersDto extends BaseFilterDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

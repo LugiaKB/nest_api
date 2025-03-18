@@ -7,6 +7,7 @@ import { ProductsModule } from './products/products.module';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { HttpResponseInterceptor } from './common/interceptors/http-response.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { CustomersModule } from './customers/customers.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
     UsersModule,
     AuthModule,
     ProductsModule,
+    CustomersModule,
   ],
   controllers: [],
   providers: [

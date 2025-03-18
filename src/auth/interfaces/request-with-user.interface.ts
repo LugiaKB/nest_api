@@ -1,7 +1,5 @@
 import { Request } from 'express';
-import { User } from '@prisma/client';
-
-type UserWithoutSensitiveInfo = Omit<User, 'password' | 'deletedAt'>;
+import { UserWithoutSensitiveInfo } from 'src/users/entities/user.entity';
 
 export interface RequestWithUser extends Request {
   user: UserWithoutSensitiveInfo;

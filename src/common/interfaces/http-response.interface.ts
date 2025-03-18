@@ -10,6 +10,8 @@ export interface IPaginationMeta {
   page: number;
   limit: number;
   pages: number;
+  orderBy?: string;
+  order?: 'asc' | 'desc';
 }
 
 export interface IPaginatedData<T> {

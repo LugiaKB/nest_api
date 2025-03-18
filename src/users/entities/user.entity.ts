@@ -1,4 +1,4 @@
-import { User as PrismaUser, UserType } from '@prisma/client';
+import { Customer, User as PrismaUser, UserType } from '@prisma/client';
 
 export class User implements PrismaUser {
   id: string;
@@ -9,4 +9,7 @@ export class User implements PrismaUser {
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
+  customer: Customer | null;
 }
+
+export type UserWithoutSensitiveInfo = Omit<User, 'password' | 'deletedAt'>;
